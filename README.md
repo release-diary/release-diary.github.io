@@ -12,7 +12,7 @@
 
 直接用浏览器打开，无需下载安装：
 
-**[https://release-diary.github.io/releasing/app.html](https://release-diary.github.io/releasing/app.html)**
+**[https://release-diary.github.io/releasing/](https://release-diary.github.io/releasing/)**
 
 ---
 

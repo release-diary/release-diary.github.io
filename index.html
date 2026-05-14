@@ -517,6 +517,8 @@
 
       .submit-btn { flex: 1 1 100%; border-radius: 12px; padding: 10px; }
 
+      .composer-input { font-size: 16px; }
+
       .hint { display: none; }
     }
 
@@ -601,11 +603,11 @@
     ></textarea>
     <div class="composer-footer">
       <div class="tag-toggles" id="tag-toggles">
-        <button class="tag-toggle" id="toggle-想要控制" onclick="toggleTag('想要控制')">想要控制 <kbd>⌥C</kbd></button>
-        <button class="tag-toggle" id="toggle-想要认同" onclick="toggleTag('想要认同')">想要认同 <kbd>⌥A</kbd></button>
-        <button class="tag-toggle" id="toggle-想要安全" onclick="toggleTag('想要安全')">想要安全 <kbd>⌥S</kbd></button>
+        <button class="tag-toggle" id="toggle-想要控制" onclick="toggleTag('想要控制')" onpointerdown="event.preventDefault()">想要控制 <kbd>⌥C</kbd></button>
+        <button class="tag-toggle" id="toggle-想要认同" onclick="toggleTag('想要认同')" onpointerdown="event.preventDefault()">想要认同 <kbd>⌥A</kbd></button>
+        <button class="tag-toggle" id="toggle-想要安全" onclick="toggleTag('想要安全')" onpointerdown="event.preventDefault()">想要安全 <kbd>⌥S</kbd></button>
       </div>
-      <button class="submit-btn" id="submit-btn" onclick="addEntry()">释放</button>
+      <button class="submit-btn" id="submit-btn" onclick="addEntry()" onpointerdown="event.preventDefault()">释放</button>
     </div>
     <div class="hint" id="hint-text">Enter 释放 · Shift+Enter 换行 · ⌥C 想要控制 · ⌥A 想要认同 · ⌥S 想要安全 · ⌥M 切换模式</div>
   </div>

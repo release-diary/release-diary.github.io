@@ -20,6 +20,9 @@
       --tag-r-bg: #edf1fa;
       --tag-r-color: #4a6aaa;
       --tag-r-border: #bcc8e8;
+      --tag-s-bg: #f3eefa;
+      --tag-s-color: #7a4aaa;
+      --tag-s-border: #d0b8e8;
       --danger: #c0392b;
     }
 
@@ -101,10 +104,55 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      color: var(--muted);
       text-align: center;
-      gap: 8px;
-      line-height: 2;
+      gap: 0;
+      padding: 20px;
+    }
+
+    .empty-state .tagline {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 28px;
+      line-height: 1.8;
+    }
+
+    .empty-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .empty-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+
+    .empty-step:last-child { border-bottom: none; }
+
+    .step-num {
+      font-size: 0.7rem;
+      color: var(--accent);
+      opacity: 0.7;
+      width: 16px;
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+
+    .step-text {
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .step-text strong {
+      color: #7a6a5a;
+      font-weight: 500;
     }
 
     .empty-state p:first-child { font-size: 1.05rem; }
@@ -204,6 +252,7 @@
 
     .tag-想要控制 { background: var(--tag-k-bg); color: var(--tag-k-color); border: 1px solid var(--tag-k-border); }
     .tag-想要认同 { background: var(--tag-r-bg); color: var(--tag-r-color); border: 1px solid var(--tag-r-border); }
+    .tag-想要安全 { background: var(--tag-s-bg); color: var(--tag-s-color); border: 1px solid var(--tag-s-border); }
 
     .delete-btn {
       opacity: 0;
@@ -285,6 +334,12 @@
       background: var(--tag-r-bg);
       border-color: var(--tag-r-border);
       color: var(--tag-r-color);
+    }
+
+    .tag-toggle.active-想要安全 {
+      background: var(--tag-s-bg);
+      border-color: var(--tag-s-border);
+      color: var(--tag-s-color);
     }
 
     .tag-toggle kbd {
@@ -463,8 +518,32 @@
   <!-- Entries -->
   <div class="entries-area" id="entries-area">
     <div class="empty-state" id="empty-state">
-      <p>把恐惧从脑子里拿出来</p>
-      <p>然后带着更轻一点的身体继续走</p>
+      <div class="empty-steps">
+        <div class="empty-step">
+          <span class="step-num">1</span>
+          <span class="step-text">写下此刻脑子里任何一个<strong>想法或感受</strong></span>
+        </div>
+        <div class="empty-step">
+          <span class="step-num">2</span>
+          <span class="step-text">问自己：这个感受背后，我在<strong>想要什么</strong>？</span>
+        </div>
+        <div class="empty-step">
+          <span class="step-num">3</span>
+          <span class="step-text">选择标签：<strong>想要控制 / 想要认同 / 想要安全</strong></span>
+        </div>
+        <div class="empty-step">
+          <span class="step-num">4</span>
+          <span class="step-text">按 Enter <strong>释放</strong>，然后写下一条</span>
+        </div>
+        <div class="empty-step">
+          <span class="step-num">5</span>
+          <span class="step-text">重复，每次释放都感到<strong>轻一点</strong></span>
+        </div>
+        <div class="empty-step">
+          <span class="step-num">6</span>
+          <span class="step-text">也可以切换到<strong>状态</strong>模式，记录当下发生了什么</span>
+        </div>
+      </div>
     </div>
     <div id="entries-list"></div>
   </div>
@@ -485,10 +564,11 @@
       <div class="tag-toggles" id="tag-toggles">
         <button class="tag-toggle" id="toggle-想要控制" onclick="toggleTag('想要控制')">想要控制 <kbd>⌥C</kbd></button>
         <button class="tag-toggle" id="toggle-想要认同" onclick="toggleTag('想要认同')">想要认同 <kbd>⌥A</kbd></button>
+        <button class="tag-toggle" id="toggle-想要安全" onclick="toggleTag('想要安全')">想要安全 <kbd>⌥S</kbd></button>
       </div>
       <button class="submit-btn" id="submit-btn" onclick="addEntry()">释放</button>
     </div>
-    <div class="hint" id="hint-text">Enter 释放 · Shift+Enter 换行 · ⌥C 想要控制 · ⌥A 想要认同 · ⌥M 切换模式</div>
+    <div class="hint" id="hint-text">Enter 释放 · Shift+Enter 换行 · ⌥C 想要控制 · ⌥A 想要认同 · ⌥S 想要安全 · ⌥M 切换模式</div>
   </div>
 
 </div>
@@ -536,7 +616,7 @@
       input.placeholder = '写下你此刻的感受…\n按 Enter 释放，Shift+Enter 换行';
       submitBtn.textContent = '释放';
       submitBtn.style.background = '';
-      hint.textContent = 'Enter 释放 · Shift+Enter 换行 · ⌥C 想要控制 · ⌥A 想要认同 · ⌥M 切换模式';
+      hint.textContent = 'Enter 释放 · Shift+Enter 换行 · ⌥C 想要控制 · ⌥A 想要认同 · ⌥S 想要安全 · ⌥M 切换模式';
     } else {
       releaseTab.className = 'mode-tab';
       actionTab.className = 'mode-tab active-action';
@@ -597,6 +677,7 @@
     selectedTags.clear();
     document.getElementById('toggle-想要控制').className = 'tag-toggle';
     document.getElementById('toggle-想要认同').className = 'tag-toggle';
+    document.getElementById('toggle-想要安全').className = 'tag-toggle';
     updateSubmitState();
 
     if (currentView === 'today') {
@@ -763,6 +844,7 @@
     }
     if (e.altKey && e.code === 'KeyC') { e.preventDefault(); toggleTag('想要控制'); }
     if (e.altKey && e.code === 'KeyA') { e.preventDefault(); toggleTag('想要认同'); }
+    if (e.altKey && e.code === 'KeyS') { e.preventDefault(); toggleTag('想要安全'); }
     if (e.altKey && e.code === 'KeyM') { e.preventDefault(); toggleMode(); }
   });
 

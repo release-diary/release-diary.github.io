@@ -488,6 +488,38 @@
       margin-left: 4px;
     }
 
+    /* ── Mobile ────────────────── */
+    @media (max-width: 600px) {
+      kbd { display: none; }
+
+      .header { padding: 16px 16px 12px; }
+
+      .nav-btns { gap: 4px; }
+      .nav-btn { padding: 4px 9px; font-size: 0.7rem; }
+
+      .entries-area { padding: 20px 16px 12px; }
+
+      .composer { padding: 12px 14px 16px; }
+
+      .mode-tabs { margin-bottom: 8px; }
+
+      .composer-footer {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .tag-toggles {
+        flex: 1 1 100%;
+        justify-content: space-between;
+      }
+
+      .tag-toggle { flex: 1; text-align: center; padding: 8px 4px; font-size: 0.76rem; }
+
+      .submit-btn { flex: 1 1 100%; border-radius: 12px; padding: 10px; }
+
+      .hint { display: none; }
+    }
+
     /* ── Animations ────────────── */
     @keyframes slideIn {
       from { opacity: 0; transform: translateY(8px); }

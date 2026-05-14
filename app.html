@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>释放日记</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #f5f0ea;
+      --surface: #faf7f3;
+      --border: #e5ddd3;
+      --text: #3a3028;
+      --muted: #9c8e80;
+      --accent: #a0806a;
+      --tag-k-bg: #fdf0e6;
+      --tag-k-color: #b06030;
+      --tag-k-border: #eacaaa;
+      --tag-r-bg: #edf1fa;
+      --tag-r-color: #4a6aaa;
+      --tag-r-border: #bcc8e8;
+      --danger: #c0392b;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'PingFang SC', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+      font-size: 15px;
+    }
+
+    /* ── Layout ────────────────── */
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    /* ── Header ────────────────── */
+    .header {
+      flex-shrink: 0;
+      padding: 24px 28px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .header-left {}
+
+    .app-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: #2d2219;
+    }
+
+    .app-date {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 3px;
+      letter-spacing: 0.03em;
+    }
+
+    .nav-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .nav-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .nav-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* ── Entries scroll area ───── */
+    .entries-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 28px 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      text-align: center;
+      gap: 8px;
+      line-height: 2;
+    }
+
+    .empty-state p:first-child { font-size: 1.05rem; }
+    .empty-state p:last-child { font-size: 0.85rem; }
+
+    /* ── Session group ─────────── */
+    .session {
+      margin-bottom: 32px;
+    }
+
+    .session-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .session-time-pill {
+      font-size: 0.72rem;
+      background: var(--accent);
+      color: #fff;
+      padding: 3px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .session-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .session-entries {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* ── Single entry ──────────── */
+    .entry {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 12px;
+      transition: border-color 0.15s;
+      position: relative;
+    }
+
+    .entry:hover { border-color: #c8b09a; }
+    .entry:hover .delete-btn { opacity: 1; }
+
+    .entry-dot {
+      width: 5px;
+      height: 5px;
+      background: var(--accent);
+      border-radius: 50%;
+      margin-top: 8px;
+      flex-shrink: 0;
+    }
+
+    .entry-time {
+      font-size: 0.7rem;
+      color: var(--muted);
+      flex-shrink: 0;
+      white-space: nowrap;
+      padding-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .entry-body {
+      flex: 1;
+      min-width: 0;
+      line-height: 1.7;
+    }
+
+    .entry-text {
+      font-size: 0.9rem;
+      color: var(--text);
+      word-break: break-all;
+    }
+
+    .entry-body .tag {
+      margin-left: 5px;
+      vertical-align: middle;
+    }
+
+    .tag {
+      font-size: 0.68rem;
+      padding: 2px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.04em;
+    }
+
+    .tag-想要控制 { background: var(--tag-k-bg); color: var(--tag-k-color); border: 1px solid var(--tag-k-border); }
+    .tag-想要认同 { background: var(--tag-r-bg); color: var(--tag-r-color); border: 1px solid var(--tag-r-border); }
+
+    .delete-btn {
+      opacity: 0;
+      background: none;
+      border: none;
+      color: #ccc;
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 0 2px;
+      transition: color 0.15s, opacity 0.15s;
+      flex-shrink: 0;
+    }
+
+    .delete-btn:hover { color: var(--danger); }
+
+    /* ── Composer ──────────────── */
+    .composer {
+      flex-shrink: 0;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      padding: 16px 20px 20px;
+    }
+
+    .composer-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      color: var(--text);
+      resize: none;
+      line-height: 1.7;
+      outline: none;
+      transition: border-color 0.15s;
+      min-height: 72px;
+      max-height: 180px;
+    }
+
+    .composer-input:focus { border-color: var(--accent); }
+    .composer-input::placeholder { color: #c0b0a0; }
+
+    .composer-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 10px;
+    }
+
+    .tag-toggles {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tag-toggle {
+      border: 1.5px solid var(--border);
+      background: transparent;
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--muted);
+      transition: all 0.15s;
+      letter-spacing: 0.04em;
+    }
+
+    .tag-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+    .tag-toggle.active-想要控制 {
+      background: var(--tag-k-bg);
+      border-color: var(--tag-k-border);
+      color: var(--tag-k-color);
+    }
+
+    .tag-toggle.active-想要认同 {
+      background: var(--tag-r-bg);
+      border-color: var(--tag-r-border);
+      color: var(--tag-r-color);
+    }
+
+    .tag-toggle kbd {
+      font-family: inherit;
+      font-size: 0.62rem;
+      opacity: 0.5;
+      margin-left: 4px;
+      letter-spacing: 0;
+    }
+
+    .submit-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 22px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .submit-btn:hover { background: #8c6858; }
+    .submit-btn:active { transform: scale(0.97); }
+    .submit-btn:disabled { background: #d0c0b0; cursor: not-allowed; }
+
+    /* ── Hint text ─────────────── */
+    .hint {
+      text-align: center;
+      font-size: 0.7rem;
+      color: #c0b0a0;
+      margin-top: 8px;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── History view ──────────── */
+    .history-nav {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 28px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      flex-shrink: 0;
+    }
+
+    .history-nav.visible { display: flex; }
+
+    .history-nav button {
+      background: none;
+      border: none;
+      color: var(--accent);
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 4px;
+    }
+
+    .history-nav span {
+      font-size: 0.82rem;
+      color: var(--muted);
+      flex: 1;
+      text-align: center;
+    }
+
+    /* ── Scrollbar ─────────────── */
+    .entries-area::-webkit-scrollbar { width: 4px; }
+    .entries-area::-webkit-scrollbar-track { background: transparent; }
+    .entries-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* ── Action entry ─────────── */
+    .entry-action {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: #f0f4ee;
+      border: 1px solid #c8d8be;
+      border-left: 3px solid #8ab880;
+      border-radius: 8px;
+      padding: 6px 12px;
+      transition: border-color 0.15s;
+      position: relative;
+    }
+
+    .entry-action:hover { border-color: #7aaa70; border-left-color: #7aaa70; }
+    .entry-action:hover .delete-btn { opacity: 1; }
+
+    .action-arrow {
+      font-size: 0.75rem;
+      color: #8ab880;
+      flex-shrink: 0;
+      font-weight: 600;
+      padding-top: 2px;
+    }
+
+    .entry-action .entry-text {
+      font-size: 0.88rem;
+      color: #3a4a38;
+    }
+
+    /* ── Mode tabs ─────────────── */
+    .mode-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 10px;
+    }
+
+    .mode-tab {
+      border: 1.5px solid var(--border);
+      background: transparent;
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--muted);
+      transition: all 0.15s;
+      letter-spacing: 0.04em;
+    }
+
+    .mode-tab:hover { border-color: var(--accent); color: var(--accent); }
+
+    .mode-tab.active-release {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .mode-tab.active-action {
+      background: #8ab880;
+      border-color: #8ab880;
+      color: #fff;
+    }
+
+    .mode-tab kbd {
+      font-family: inherit;
+      font-size: 0.6rem;
+      opacity: 0.7;
+      margin-left: 4px;
+    }
+
+    /* ── Animations ────────────── */
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .entry.new, .entry-action.new { animation: slideIn 0.2s ease; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="app-title">释放日记</div>
+      <div class="app-date" id="date-display"></div>
+    </div>
+    <div class="nav-btns">
+      <button class="nav-btn active" id="btn-today" onclick="switchView('today')">今天</button>
+      <button class="nav-btn" id="btn-history" onclick="switchView('history')">历史</button>
+      <button class="nav-btn" onclick="exportData()" title="导出备份到本地文件">导出</button>
+      <button class="nav-btn" onclick="document.getElementById('import-input').click()" title="从本地文件恢复">导入</button>
+      <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+  </div>
+
+  <!-- History navigation bar (hidden by default) -->
+  <div class="history-nav" id="history-nav">
+    <button onclick="shiftDay(-1)">‹ 前一天</button>
+    <span id="history-date-label"></span>
+    <button onclick="shiftDay(1)">后一天 ›</button>
+  </div>
+
+  <!-- Entries -->
+  <div class="entries-area" id="entries-area">
+    <div class="empty-state" id="empty-state">
+      <p>把恐惧从脑子里拿出来</p>
+      <p>然后带着更轻一点的身体继续走</p>
+    </div>
+    <div id="entries-list"></div>
+  </div>
+
+  <!-- Composer -->
+  <div class="composer" id="composer">
+    <div class="mode-tabs">
+      <button class="mode-tab active-release" id="mode-release" onclick="setMode('release')">释放 <kbd>⌥M</kbd></button>
+      <button class="mode-tab" id="mode-action" onclick="setMode('action')">状态 <kbd>⌥M</kbd></button>
+    </div>
+    <textarea
+      class="composer-input"
+      id="input"
+      placeholder="写下你此刻的感受…&#10;按 Enter 释放，Shift+Enter 换行"
+      rows="3"
+    ></textarea>
+    <div class="composer-footer">
+      <div class="tag-toggles" id="tag-toggles">
+        <button class="tag-toggle" id="toggle-想要控制" onclick="toggleTag('想要控制')">想要控制 <kbd>⌥C</kbd></button>
+        <button class="tag-toggle" id="toggle-想要认同" onclick="toggleTag('想要认同')">想要认同 <kbd>⌥A</kbd></button>
+      </div>
+      <button class="submit-btn" id="submit-btn" onclick="addEntry()">释放</button>
+    </div>
+    <div class="hint" id="hint-text">Enter 释放 · Shift+Enter 换行 · ⌥C 想要控制 · ⌥A 想要认同 · ⌥M 切换模式</div>
+  </div>
+
+</div>
+
+<script>
+  // ── State ────────────────────────────────────
+  const todayKey = () => new Date().toISOString().slice(0, 10);
+  let viewDate = todayKey();          // YYYY-MM-DD currently shown
+  let currentView = 'today';          // 'today' | 'history'
+  let currentMode = 'release';        // 'release' | 'action'
+  let selectedTags = new Set();
+
+  // ── Storage ──────────────────────────────────
+  function loadEntries(dateKey) {
+    try {
+      return JSON.parse(localStorage.getItem('释放日记_' + dateKey) || '[]');
+    } catch { return []; }
+  }
+
+  function saveEntries(dateKey, entries) {
+    localStorage.setItem('释放日记_' + dateKey, JSON.stringify(entries));
+  }
+
+  function allDates() {
+    return Object.keys(localStorage)
+      .filter(k => k.startsWith('释放日记_'))
+      .map(k => k.replace('释放日记_', ''))
+      .sort();
+  }
+
+  // ── Mode switching ───────────────────────────
+  function setMode(mode) {
+    currentMode = mode;
+    const input = document.getElementById('input');
+    const tagToggles = document.getElementById('tag-toggles');
+    const submitBtn = document.getElementById('submit-btn');
+    const hint = document.getElementById('hint-text');
+    const releaseTab = document.getElementById('mode-release');
+    const actionTab = document.getElementById('mode-action');
+
+    if (mode === 'release') {
+      releaseTab.className = 'mode-tab active-release';
+      actionTab.className = 'mode-tab';
+      tagToggles.style.visibility = '';
+      input.placeholder = '写下你此刻的感受…\n按 Enter 释放，Shift+Enter 换行';
+      submitBtn.textContent = '释放';
+      submitBtn.style.background = '';
+      hint.textContent = 'Enter 释放 · Shift+Enter 换行 · ⌥C 想要控制 · ⌥A 想要认同 · ⌥M 切换模式';
+    } else {
+      releaseTab.className = 'mode-tab';
+      actionTab.className = 'mode-tab active-action';
+      tagToggles.style.visibility = 'hidden';
+      input.placeholder = '记录当下的状态，或刚刚发生了什么…\n按 Enter 记录，Shift+Enter 换行';
+      submitBtn.textContent = '记录';
+      submitBtn.style.background = '#8ab880';
+      hint.textContent = 'Enter 记录 · Shift+Enter 换行 · Alt+M 切换回释放模式';
+    }
+    updateSubmitState();
+    input.focus();
+  }
+
+  function toggleMode() {
+    setMode(currentMode === 'release' ? 'action' : 'release');
+  }
+
+  // ── Tag toggle ───────────────────────────────
+  function toggleTag(tag) {
+    if (selectedTags.has(tag)) {
+      selectedTags.delete(tag);
+      document.getElementById('toggle-' + tag).className = 'tag-toggle';
+    } else {
+      selectedTags.add(tag);
+      document.getElementById('toggle-' + tag).className = 'tag-toggle active-' + tag;
+    }
+    updateSubmitState();
+  }
+
+  function updateSubmitState() {
+    const btn = document.getElementById('submit-btn');
+    const blocked = currentMode === 'release' && selectedTags.size === 0;
+    btn.disabled = blocked;
+    btn.style.opacity = blocked ? '0.35' : '';
+    btn.style.cursor = blocked ? 'not-allowed' : '';
+  }
+
+  // ── Add entry ────────────────────────────────
+  function addEntry() {
+    const input = document.getElementById('input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const key = todayKey();
+    const entries = loadEntries(key);
+    const entry = {
+      id: Date.now(),
+      text,
+      tags: currentMode === 'release' ? [...selectedTags] : [],
+      type: currentMode,
+      ts: Date.now()
+    };
+    entries.push(entry);
+    saveEntries(key, entries);
+
+    input.value = '';
+    input.style.height = '';
+    selectedTags.clear();
+    document.getElementById('toggle-想要控制').className = 'tag-toggle';
+    document.getElementById('toggle-想要认同').className = 'tag-toggle';
+    updateSubmitState();
+
+    if (currentView === 'today') {
+      renderDay(key);
+      setTimeout(scrollBottom, 50);
+    }
+
+  }
+
+  // ── Delete entry ─────────────────────────────
+  function deleteEntry(dateKey, id) {
+    let entries = loadEntries(dateKey);
+    entries = entries.filter(e => e.id !== id);
+    saveEntries(dateKey, entries);
+    renderDay(dateKey);
+  }
+
+  // ── Render ───────────────────────────────────
+  function formatTime(ts) {
+    return new Date(ts).toLocaleTimeString('zh-CN', {
+      hour: '2-digit', minute: '2-digit', hour12: false
+    });
+  }
+
+  function formatDateLabel(dateStr) {
+    const d = new Date(dateStr + 'T12:00:00');
+    return d.toLocaleDateString('zh-CN', {
+      year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
+    });
+  }
+
+  function groupEntries(entries) {
+    const GAP = 10 * 60 * 1000; // 10 minutes
+    const groups = [];
+    let group = null;
+    for (const e of entries) {
+      if (!group || e.ts - group.entries.at(-1).ts > GAP) {
+        group = { startTs: e.ts, entries: [] };
+        groups.push(group);
+      }
+      group.entries.push(e);
+    }
+    return groups;
+  }
+
+  function renderDay(dateKey) {
+    const entries = loadEntries(dateKey);
+    const emptyState = document.getElementById('empty-state');
+    const list = document.getElementById('entries-list');
+
+    if (entries.length === 0) {
+      emptyState.style.display = 'flex';
+      list.innerHTML = '';
+      return;
+    }
+
+    emptyState.style.display = 'none';
+    const groups = groupEntries(entries);
+
+    list.innerHTML = groups.map(group => `
+      <div class="session">
+        <div class="session-header">
+          <div class="session-time-pill">${formatTime(group.startTs)}</div>
+          <div class="session-line"></div>
+        </div>
+        <div class="session-entries">
+          ${group.entries.map(entry => entry.type === 'action' ? `
+            <div class="entry-action" data-id="${entry.id}">
+              <div class="entry-time">${formatTime(entry.ts)}</div>
+              <div class="action-arrow">›</div>
+              <div class="entry-body">
+                <span class="entry-text">${escapeHtml(entry.text)}</span>
+              </div>
+              <button class="delete-btn" onclick="deleteEntry('${dateKey}', ${entry.id})" title="删除">×</button>
+            </div>
+          ` : `
+            <div class="entry" data-id="${entry.id}">
+              <div class="entry-time">${formatTime(entry.ts)}</div>
+              <div class="entry-dot"></div>
+              <div class="entry-body">
+                <span class="entry-text">${escapeHtml(entry.text)}</span>
+                ${entry.tags.map(t => `<span class="tag tag-${t}">${t}</span>`).join('')}
+              </div>
+              <button class="delete-btn" onclick="deleteEntry('${dateKey}', ${entry.id})" title="删除">×</button>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function escapeHtml(s) {
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n/g, '<br>');
+  }
+
+  function scrollBottom() {
+    const area = document.getElementById('entries-area');
+    area.scrollTop = area.scrollHeight;
+  }
+
+  // ── View switching ───────────────────────────
+  function switchView(view) {
+    currentView = view;
+    const composer = document.getElementById('composer');
+    const historyNav = document.getElementById('history-nav');
+    const btnToday = document.getElementById('btn-today');
+    const btnHistory = document.getElementById('btn-history');
+
+    if (view === 'today') {
+      viewDate = todayKey();
+      composer.style.display = '';
+      historyNav.classList.remove('visible');
+      btnToday.classList.add('active');
+      btnHistory.classList.remove('active');
+      renderDay(viewDate);
+      setTimeout(scrollBottom, 50);
+    } else {
+      // find most recent day with entries, default to today
+      const dates = allDates();
+      viewDate = dates.length ? dates.at(-1) : todayKey();
+      composer.style.display = 'none';
+      historyNav.classList.add('visible');
+      btnToday.classList.remove('active');
+      btnHistory.classList.add('active');
+      updateHistoryLabel();
+      renderDay(viewDate);
+    }
+  }
+
+  function shiftDay(delta) {
+    const dates = allDates();
+    if (!dates.length) return;
+    let idx = dates.indexOf(viewDate);
+    if (idx === -1) idx = dates.length - 1;
+    idx = Math.max(0, Math.min(dates.length - 1, idx + delta));
+    viewDate = dates[idx];
+    updateHistoryLabel();
+    renderDay(viewDate);
+  }
+
+  function updateHistoryLabel() {
+    document.getElementById('history-date-label').textContent = formatDateLabel(viewDate);
+  }
+
+  // ── Header date ──────────────────────────────
+  function setHeaderDate() {
+    const now = new Date();
+    document.getElementById('date-display').textContent =
+      now.toLocaleDateString('zh-CN', {
+        year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
+      });
+  }
+
+  // ── Keyboard ─────────────────────────────────
+  document.getElementById('input').addEventListener('keydown', function (e) {
+    if (e.isComposing || e.keyCode === 229) return;
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      if (!document.getElementById('submit-btn').disabled) addEntry();
+    }
+    if (e.altKey && e.code === 'KeyC') { e.preventDefault(); toggleTag('想要控制'); }
+    if (e.altKey && e.code === 'KeyA') { e.preventDefault(); toggleTag('想要认同'); }
+    if (e.altKey && e.code === 'KeyM') { e.preventDefault(); toggleMode(); }
+  });
+
+
+  // auto-resize textarea
+  document.getElementById('input').addEventListener('input', function () {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 180) + 'px';
+  });
+
+  // ── 导出 / 导入 ──────────────────────────────
+  function exportData() {
+    const data = {};
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith('释放日记_')) {
+        data[key.replace('释放日记_', '')] = JSON.parse(localStorage.getItem(key));
+      }
+    }
+    const json = JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), data }, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `释放日记_${todayKey()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const parsed = JSON.parse(e.target.result);
+        const data = parsed.data ?? parsed; // 兼容直接放对象的格式
+        let count = 0;
+        for (const [date, entries] of Object.entries(data)) {
+          if (Array.isArray(entries)) {
+            localStorage.setItem('释放日记_' + date, JSON.stringify(entries));
+            count++;
+          }
+        }
+        alert(`导入成功，共恢复 ${count} 天的记录。`);
+        renderDay(viewDate);
+      } catch {
+        alert('文件格式不对，导入失败。');
+      }
+      event.target.value = '';
+    };
+    reader.readAsText(file);
+  }
+
+  // ── Init ─────────────────────────────────────
+  setHeaderDate();
+  renderDay(todayKey());
+  setTimeout(scrollBottom, 50);
+  updateSubmitState();
+</script>
+</body>
+</html>

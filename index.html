@@ -33,6 +33,25 @@
       --danger: #c0392b;
     }
 
+    .dark {
+      --bg: #1c1814;
+      --surface: #252019;
+      --border: #3a3028;
+      --text: #e2d5c4;
+      --muted: #7a6e62;
+      --accent: #c49a78;
+      --tag-k-bg: #2e1f0e;
+      --tag-k-color: #e09060;
+      --tag-k-border: #5a3010;
+      --tag-r-bg: #0e1828;
+      --tag-r-color: #7898d8;
+      --tag-r-border: #1a3050;
+      --tag-s-bg: #1a0e2a;
+      --tag-s-color: #aa80d8;
+      --tag-s-border: #3a1858;
+      --danger: #e05040;
+    }
+
     html, body {
       height: 100%;
       background: var(--bg);
@@ -481,6 +500,14 @@
       color: #fff;
     }
 
+    .release-count {
+      margin-left: auto;
+      font-size: 0.72rem;
+      color: var(--muted);
+      align-self: center;
+      white-space: nowrap;
+    }
+
     .mode-tab kbd {
       font-family: inherit;
       font-size: 0.6rem;
@@ -545,6 +572,7 @@
       <button class="nav-btn" id="btn-history" onclick="switchView('history')">历史</button>
       <button class="nav-btn" onclick="exportData()" title="导出备份到本地文件">导出</button>
       <button class="nav-btn" onclick="document.getElementById('import-input').click()" title="从本地文件恢复">导入</button>
+      <button class="nav-btn" id="btn-dark" onclick="toggleDark()" title="夜间模式">🌙</button>
       <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
     </div>
   </div>
@@ -594,6 +622,7 @@
     <div class="mode-tabs">
       <button class="mode-tab active-release" id="mode-release" onclick="setMode('release')">释放 <kbd>⌥M</kbd></button>
       <button class="mode-tab" id="mode-action" onclick="setMode('action')">状态 <kbd>⌥M</kbd></button>
+      <span class="release-count" id="release-count"></span>
     </div>
     <textarea
       class="composer-input"
@@ -687,6 +716,13 @@
     updateSubmitState();
   }
 
+  function updateReleaseCount() {
+    const entries = loadEntries(todayKey());
+    const count = entries.filter(e => e.type === 'release').length;
+    const el = document.getElementById('release-count');
+    el.textContent = count > 0 ? `今天已释放 ${count} 条` : '';
+  }
+
   function updateSubmitState() {
     const btn = document.getElementById('submit-btn');
     const blocked = currentMode === 'release' && selectedTags.size === 0;
@@ -725,6 +761,7 @@
       renderDay(key);
       setTimeout(scrollBottom, 50);
     }
+    updateReleaseCount();
 
   }
 
@@ -939,11 +976,27 @@
     reader.readAsText(file);
   }
 
+  // ── 夜间模式 ──────────────────────────────────
+  function toggleDark() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('dark', isDark ? '1' : '');
+    document.getElementById('btn-dark').textContent = isDark ? '☀️' : '🌙';
+  }
+
+  function initDark() {
+    if (localStorage.getItem('dark')) {
+      document.documentElement.classList.add('dark');
+      document.getElementById('btn-dark').textContent = '☀️';
+    }
+  }
+
   // ── Init ─────────────────────────────────────
+  initDark();
   setHeaderDate();
   renderDay(todayKey());
   setTimeout(scrollBottom, 50);
   updateSubmitState();
+  updateReleaseCount();
 </script>
 </body>
 </html>
